@@ -1,0 +1,95 @@
+﻿@page "/Questionnaire/{Token:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+
+<PageTitle>@Title</PageTitle>
+
+@if (UserModel is not null)
+{
+    <AuthorizeView Context="authorizeViewContext" Resource="UserModel" Policy="@Policies.IsCurrentUser">
+        <Authorized>
+            <MudTabs @ref="Tabs" Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+                <MudTabPanel @ref="TimeAvailabilityTabPanel" Text="Time Availability">
+                    <MudGrid Class="mb-4">
+                        <MudItem xs="12" Class="border-solid border-b mud-border-dark">
+                            <MudGrid>
+                                <MudItem xs="2"></MudItem>
+                                @foreach (WorkDayOfWeek day in Enum.GetValues(typeof(WorkDayOfWeek)))
+                                {
+                                    <MudItem xs="2"><MudText Align="Align.Center">@day.ToString()</MudText></MudItem>
+                                }
+                            </MudGrid>
+                        </MudItem>
+
+                        @{
+                            foreach (TimeOnly time in Times)
+                            {
+                                <MudItem xs="12" Class="border-solid border-b mud-border-dark">
+                                    <MudGrid>
+                                        <MudItem xs="2">
+                                            <MudText Class="pa-3" Align="Align.Center">
+                                                @($"{time.Hour.ToString().PadLeft(2, '0')}:00 - {(time.Hour + 1).ToString().PadLeft(2, '0')}:00")
+                                            </MudText>
+                                        </MudItem>
+
+                                        @{
+                                            foreach (WorkDayOfWeek day in Enum.GetValues(typeof(WorkDayOfWeek)))
+                                            {
+                                                var timeAvailability = TimeAvailabilities.First(x => x.WorkDayOfWeek == day && x.StartTime.Hour == time.Hour);
+
+                                                <MudItem xs="2">
+                                                    <MudText Align="Align.Center">
+                                                        <MudCheckBox @bind-Checked="@timeAvailability.Selected"></MudCheckBox>
+                                                    </MudText>
+                                                </MudItem>
+                                            }
+                                        }
+                                    </MudGrid>
+                                </MudItem>
+                            }
+                        }
+                    </MudGrid>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Class="d-block ml-auto" OnClick="@(() => ShowModulePreferencesTab())">Next</MudButton>
+                </MudTabPanel>
+
+                <MudTabPanel @ref="ModulePreferencesTabPanel" Text="Module Preferences">
+                    <MudGrid>
+                        @{
+                            foreach (ModulePreferenceInputModel item in ModulePreferences)
+                            {
+                                ModulePreferenceInputModel preference = item;
+
+                                <MudItem xs="12" sm="3" Class="mb-4">
+                                    <MudCard>
+                                        <MudText Align="Align.Center">
+                                            <MudCheckBox @bind-Checked="@preference.Selected">@preference.Module.Name</MudCheckBox>
+                                        </MudText>
+                                    </MudCard>
+                                </MudItem>
+                            }
+                        }
+                    </MudGrid>
+
+                    <div class="d-flex justify-end gap-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="@(() => ShowTimeAvailabilityTab())">Previous</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(async () => await SubmitQuestionnaire())">Submit</MudButton>
+                    </div>
+                </MudTabPanel>
+            </MudTabs>
+        </Authorized>
+        <NotAuthorized>
+            @{
+                try
+                {
+                    NavigationManager.NavigateTo(uri: "/401");
+                }
+                catch { } // Safe to ignore exception
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <MudText>Loading...</MudText>
+}

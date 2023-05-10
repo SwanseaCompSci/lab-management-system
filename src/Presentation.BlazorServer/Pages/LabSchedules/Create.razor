@@ -1,0 +1,107 @@
+﻿@page "/LabSchedules/Create/{LabId:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+
+<PageTitle>@Title</PageTitle>
+
+@if (ResourceResponse is not null && ResourceResponse.Resource is not null && SingleLabScheduleCommand is not null)
+{
+    <AuthorizeView Resource="ResourceResponse.Resource" Policy="@Policies.IsLabCoordinator">
+        <Authorized>
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+                <MudTabPanel Text="Single Lab Schedule">
+                    <MudText Typo="Typo.h6">Create a new lab schedule</MudText>
+
+                    <MudForm @ref="SingleLabScheduleForm" Model="SingleLabScheduleCommand" Validation="SingleLabScheduleValidateValue" ValidationDelay="0">
+                        <MudGrid Class="py-4">
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="ResourceResponse.Resource.Name"
+                                          For="@(() => ResourceResponse.Resource.Name)"
+                                          Immediate="true"
+                                          Label="Lab"
+                                          ReadOnly="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudDatePicker @bind-Date="SingleLabScheduleCommand.Date"
+                                           For="@(() => SingleLabScheduleCommand.Date)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="Date"
+                                           Placeholder="Select Date" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTimePicker @bind-Time="SingleLabScheduleCommand.Start"
+                                           For="@(() => SingleLabScheduleCommand.Start)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="Start Time" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTimePicker @bind-Time="SingleLabScheduleCommand.End"
+                                           For="@(() => SingleLabScheduleCommand.End)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="End Time" />
+                            </MudItem>
+                        </MudGrid>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Class="d-block ml-auto" OnClick="@(async () => await CreateSingleLabScheduleAsync())">Create</MudButton>
+                    </MudForm>
+                </MudTabPanel>
+                <MudTabPanel Text="Multiple Lab Schedules">
+                    <MudText Typo="Typo.h6">Create new lab schedules</MudText>
+
+                    <MudForm @ref="RangeLabScheduleForm" Model="RangeLabScheduleCommand" Validation="RangeLabScheduleValidateValue" ValidationDelay="0">
+                        <MudGrid Class="py-4">
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="ResourceResponse.Resource.Name"
+                                          For="@(() => ResourceResponse.Resource.Name)"
+                                          Immediate="true"
+                                          Label="Lab"
+                                          ReadOnly="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudDatePicker @bind-Date="RangeLabScheduleCommand.StartDate"
+                                           For="@(() => RangeLabScheduleCommand.StartDate)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="Start Date"
+                                           Placeholder="Select Start Date" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudNumericField @bind-Value="RangeLabScheduleCommand.NumberOfOccurrences"
+                                           For="@(() => RangeLabScheduleCommand.NumberOfOccurrences)"
+                                           Min="1"
+                                           Immediate="true"
+                                           Required="true"
+                                           Label="Number of Occurrences" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudTimePicker @bind-Time="RangeLabScheduleCommand.Start"
+                                           For="@(() => RangeLabScheduleCommand.Start)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="Start Time" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudTimePicker @bind-Time="RangeLabScheduleCommand.End"
+                                           For="@(() => RangeLabScheduleCommand.End)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="End Time" />
+                            </MudItem>
+                        </MudGrid>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Class="d-block ml-auto" OnClick="@(async () => await CreateRangeLabScheduleAsync())">Create</MudButton>
+                    </MudForm>
+                </MudTabPanel>
+            </MudTabs>
+        </Authorized>
+        <NotAuthorized>
+            @{
+                try
+                {
+                    NavigationManager.NavigateTo("/401");
+                }
+                catch { } // Safe to ignore exception
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+}

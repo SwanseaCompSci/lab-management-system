@@ -1,0 +1,79 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudSpacer />
+
+        <MudAvatar Color="Color.Inherit">
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true" Label="@($"{CurrentUserService.UserFirstName?[0]}{CurrentUserService.UserSurname?[0]}")">
+                <MudMenuItem>
+                    <MudLink Href="@($"/Users/{CurrentUserService.UserId}")">Profile</MudLink>
+                </MudMenuItem>
+                <MudDivider />
+                <MudMenuItem>
+                    <MudLink Href="/MicrosoftIdentity/Account/SignOut">Log out</MudLink>
+                </MudMenuItem>
+            </MudMenu>
+        </MudAvatar>
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Lab Manager</MudText>
+        </MudDrawerHeader>
+        <div class="d-flex flex-column flex-grow-1">
+            <div class="d-flex flex-column flex-grow-1">
+                <NavMenu />
+            </div>
+            <MudDivider Class="flex-grow-0" />
+            <div>
+                @if (_isDarkMode)
+                {
+                    <MudButton Variant="Variant.Text"
+                           Class="pa-4"
+                           FullWidth="true"
+                           OnClick="@(() => _isDarkMode = false)"
+                           StartIcon="@Icons.Material.Filled.LightMode">Light Mode</MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Text"
+                           Class="pa-4"
+                           FullWidth="true"
+                           OnClick="@(() => _isDarkMode = true)"
+                           StartIcon="@Icons.Material.Filled.DarkMode">Dark Mode</MudButton>
+                }
+            </div>
+        </div>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer Fixed="true" Class="my-2 py-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+
+    private MudThemeProvider _mudThemeProvider = null!;
+    bool _isDarkMode = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+            StateHasChanged();
+        }
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

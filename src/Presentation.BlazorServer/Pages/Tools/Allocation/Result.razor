@@ -1,0 +1,90 @@
+﻿@page "/Tools/Allocation/Result"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.AllocationModels
+
+<PageTitle>@Title</PageTitle>
+
+<AuthorizeView Context="authorizeViewContext" Roles="@ApplicationRole.Administrator.ToString()">
+    <Authorized>
+        <MudText Typo="Typo.h6">@Title</MudText>
+
+        <MudTable Class="mt-4" Items="Allocations" Hover="true" Filter="new Func<AllocationResultPageModel, bool>(FilterAllocationsFunction)">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Allocations</MudText>
+                <MudSpacer />
+                <MudTextField Style="margin-top: -6px;" @bind-Value="AllocationsSearchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+            </ToolBarContent>
+
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.Module.Name)">Module Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.Module.Code)">Module Code</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.Module.Level)">Module Level</MudTableSortLabel></MudTh>
+
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.Lab.Name)">Lab Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.Lab.Day)">Day</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.Lab.StartTime)">Start Time</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.Lab.EndTime)">End Time</MudTableSortLabel></MudTh>
+
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.User.FirstName)">First Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.User.Surname)">Surname</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AllocationResultPageModel, object>(x => x.User.AchievedLevel)">Achieved Level</MudTableSortLabel></MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="Module Name">
+                    <MudLink Href="@($"/Modules/{context.Module.Id}")">
+                        @context.Module.Name
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Module Code">
+                    @context.Module.Code
+                </MudTd>
+                <MudTd DataLabel="Module Level">
+                    @context.Module.Level
+                </MudTd>
+
+                <MudTd DataLabel="Lab Name">
+                    <MudLink Href="@($"/Labs/{context.Lab.Id}")">
+                        @context.Lab.Name
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Day">
+                    @context.Lab.Day
+                </MudTd>
+                <MudTd DataLabel="Start Time">
+                    @context.Lab.StartTime
+                </MudTd>
+                <MudTd DataLabel="End Time">
+                    @context.Lab.EndTime
+                </MudTd>
+
+                <MudTd DataLabel="First Name">
+                    <MudLink Href="@($"/Users/{context.User.Id}")">
+                        @context.User.FirstName
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Surname">
+                    <MudLink Href="@($"/Users/{context.User.Id}")">
+                        @context.User.Surname
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Achieved Level">
+                    @context.User.AchievedLevel
+                </MudTd>
+            </RowTemplate>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </Authorized>
+    <NotAuthorized>
+        @{
+            try
+            {
+                NavigationManager.NavigateTo("/401");
+            }
+            catch { } // Safe to ignore exception
+        }
+    </NotAuthorized>
+</AuthorizeView>

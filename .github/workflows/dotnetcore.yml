@@ -1,0 +1,45 @@
+name: .NET
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.x.x'
+    - name: Install dotnet ef
+      run: dotnet tool install --global dotnet-ef
+    - name: Build with dotnet
+      run: dotnet build --configuration Release LabManagementSystem.sln
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server
+        ports:
+          - 1433:1433
+        env:
+          SA_PASSWORD: 3KwiryaQ7QkV3788VYr65Y6F
+          ACCEPT_EULA: Y
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.x.x'
+    - name: run tests
+      run: dotnet test LabManagementSystem.sln --configuration Release
+      env:
+        ConnectionStrings__DbConnection: Server=.;Database=LabManagementSystemDbIntegrationTests;User=SA;Password=3KwiryaQ7QkV3788VYr65Y6F;TrustServerCertificate=True

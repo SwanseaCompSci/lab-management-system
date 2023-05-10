@@ -1,0 +1,61 @@
+﻿@page "/Users"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.UserModels
+
+<PageTitle>@Title</PageTitle>
+
+<AuthorizeView Context="authorizeViewContext" Roles="@ApplicationRole.Administrator.ToString()">
+    <Authorized>
+        <MudTable Items="Users" Hover="true" Filter="new Func<UserModel, bool>(FilterFunction)">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">@Title</MudText>
+                <MudSpacer />
+                <MudTextField Style="margin-top: -6px;" @bind-Value="SearchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+
+                <AuthorizeView Roles="@($"{ApplicationRole.Administrator.ToString()}")">
+                    <MudButton Href="@($"/Users/Create")" Class="ml-4 mr-2" Variant="Variant.Filled" Color="@Color.Success">New User</MudButton>
+                </AuthorizeView>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.FirstName)">First name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.Surname)">Surname</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.AchievedLevel)">Achieved level</MudTableSortLabel></MudTh>
+                <MudTh Style="width:80px;"></MudTh>
+                <MudTh Style="width:80px;"></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="First name">
+                    <MudLink Href="@($"/Users/{context.Id}")">
+                        @context.FirstName
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Surname">
+                    <MudLink Href="@($"/Users/{context.Id}")">
+                        @context.Surname
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Achieved level">@context.AchievedLevel</MudTd>
+                <MudTd Class="pa-0">
+                    <MudIconButton Href="@($"/Users/Edit/{context.Id}")" Icon="@Icons.Material.Filled.Edit" Color="Color.Info"></MudIconButton>
+                </MudTd>
+                <MudTd Class="pa-0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   OnClick="@(() => OpenDeleteConfirmationDialog(context.Id))"></MudIconButton>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </Authorized>
+    <NotAuthorized>
+        @{
+            try
+            {
+                NavigationManager.NavigateTo("/401");
+            }
+            catch { } // Safe to ignore exception
+        }
+    </NotAuthorized>
+</AuthorizeView>

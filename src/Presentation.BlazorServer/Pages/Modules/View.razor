@@ -1,0 +1,211 @@
+﻿@page "/Modules/{ModuleId:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.LabModels
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.ModuleModels
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.ModulePreferenceModels
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+
+<PageTitle>@Title</PageTitle>
+
+@if (Model is not null)
+{
+    <AuthorizeView Resource="Model" Policy="@Policies.IsModuleCoordinator">
+        @if (ModulePreferencesAlertClosed == false && Model.ModulePreferences.Any(x => x.Status == Status.PendingResponse.ToString()))
+        {
+            <MudAlert Class="mb-4" Severity="Severity.Info" Variant="Variant.Filled" ShowCloseIcon="true" CloseIconClicked="(() => ModulePreferencesAlertClosed = true)">
+                You have new requests from members of staff to work in this module
+            </MudAlert>
+        }
+    </AuthorizeView>
+
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">@Model.Name</MudText>
+            <AuthorizeView Resource="@Model" Policy="@Policies.IsModuleCoordinator">
+                <MudSpacer />
+                <MudButton Href="@($"/Modules/Edit/{Model.Id}")" Class="ml-4" Variant="Variant.Filled" Color="@Color.Info">Edit</MudButton>
+            </AuthorizeView>
+            <AuthorizeView Roles="@($"{ApplicationRole.Administrator.ToString()}")">
+                <MudButton OnClick="@(() => OpenDeleteModuleConfirmationDialog(Model.Id))" Class="ml-4" Variant="Variant.Filled" Color="@Color.Error">Delete</MudButton>
+            </AuthorizeView>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTextField @bind-Value="Model.Code" Label="Code" ReadOnly="true" Variant="Variant.Text" />
+            <MudTextField @bind-Value="Model.Level" Label="Level" ReadOnly="true" Variant="Variant.Text" />
+        </MudCardContent>
+    </MudCard>
+
+    <MudTable Items="@Model.Labs" Hover="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Labs</MudText>
+            <AuthorizeView Resource="@Model" Policy="@Policies.IsModuleCoordinator">
+                <MudSpacer />
+                <MudButton Href="@($"/Labs/Create/{Model.Id}")" Class="ml-4 mr-2" Variant="Variant.Filled" Color="@Color.Success">New Lab</MudButton>
+            </AuthorizeView>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<LabModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<LabModel, object>(x => x.Day)">Day of Week</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<LabModel, object>(x => x.StartTime)">Start Time</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<LabModel, object>(x => x.EndTime)">End Time</MudTableSortLabel></MudTh>
+            <AuthorizeView Resource="Model" Policy="@Policies.IsModuleCoordinator">
+                <MudTh Style="width:80px;"></MudTh>
+            </AuthorizeView>
+            <MudTh Style="width:80px;"></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">
+                <MudLink Href="@($"/Labs/{context.Id}")">
+                    @context.Name
+                </MudLink>
+            </MudTd>
+            <MudTd DataLabel="Day of Week">@context.Day</MudTd>
+            <MudTd DataLabel="Start Time">@context.StartTime</MudTd>
+            <MudTd DataLabel="End Time">@context.EndTime</MudTd>
+            <AuthorizeView Context="authorizeViewContext" Resource="@context" Policy="@Policies.IsLabCoordinator">
+                <Authorized>
+                    <MudTd Class="pa-0">
+                        <MudIconButton Href="@($"/Labs/Edit/{context.Id}")" Icon="@Icons.Material.Filled.Edit" Color="Color.Info"></MudIconButton>
+                    </MudTd>
+                </Authorized>
+                <NotAuthorized>
+                    <MudTh></MudTh>
+                </NotAuthorized>
+            </AuthorizeView>
+            <AuthorizeView Context="authorizeViewContext" Resource="Model" Policy="@Policies.IsModuleCoordinator">
+                <Authorized>
+                    <MudTd Class="pa-0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   OnClick="@(() => OpenDeleteLabConfirmationDialog(context.Id))"></MudIconButton>
+                    </MudTd>
+                </Authorized>
+            </AuthorizeView>
+        </RowTemplate>
+    </MudTable>
+
+    <AuthorizeView Context="authorizeViewContextUserRoles" Resource="Model" Policy="@Policies.IsLabCoordinator">
+        <MudTabs Elevation="2" Class="mt-4">
+            <MudTabPanel Text="Staff">
+                <MudTable Class="rounded-t-0"
+                      Items="Model.UserRoles"
+                      Hover="true"
+                      Filter="new Func<ModuleDetailUserRoleModel, bool>(FilterUsersFunction)">
+                    <ToolBarContent>
+                        <MudTextField @bind-Value="UsersSearchString"
+                                  Style="margin-top: -6px;"
+                                  Placeholder="Search"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"></MudTextField>
+                        <AuthorizeView Context="authorizeViewContextUserRolesButtons" Roles="@ApplicationRole.Administrator.ToString()">
+                            <MudButton Href="@($"/Modules/{ModuleId}/Users/Add")" Class="ml-4 mr-2" Variant="Variant.Filled" Color="@Color.Success">Add User</MudButton>
+                        </AuthorizeView>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModuleDetailUserRoleModel, object>(x => x.User.FirstName)">First name</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModuleDetailUserRoleModel, object>(x => x.User.Surname)">Surname</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModuleDetailUserRoleModel, object>(x => x.User.AchievedLevel)">Achieved level</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModuleDetailUserRoleModel, object>(x => x.Role)">Role</MudTableSortLabel></MudTh>
+                        <AuthorizeView Context="authorizeViewContextUserRolesButtons" Roles="@ApplicationRole.Administrator.ToString()">
+                            <MudTh Style="width:80px;"></MudTh>
+                            <MudTh Style="width:80px;"></MudTh>
+                        </AuthorizeView>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="First name">
+                            <MudLink Href="@($"/Users/{context.User.Id}")">
+                                @context.User.FirstName
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Surname">
+                            <MudLink Href="@($"/Users/{context.User.Id}")">
+                                @context.User.Surname
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Achieved level">@context.User.AchievedLevel</MudTd>
+                        <MudTd DataLabel="Role">@context.Role</MudTd>
+                        <AuthorizeView Context="authorizeViewContextUserRolesButtons" Roles="@ApplicationRole.Administrator.ToString()">
+                            <MudTd Class="pa-0">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Info"
+                                           Href="@($"/Modules/{ModuleId}/Users/Edit/{context.User.Id}")"></MudIconButton>
+                            </MudTd>
+                            <MudTd Class="pa-0">
+                                <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                           Color="Color.Error"
+                                           OnClick="@(() => OpenRemoveUserModuleRoleConfirmationDialog(context.User.Id))"></MudIconButton>
+                            </MudTd>
+                        </AuthorizeView>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+            <MudTabPanel Text="Applications">
+                <MudTable Class="rounded-t-0"
+                      Items="Model.ModulePreferences"
+                      Hover="true"
+                      Filter="new Func<ModulePreferenceDetailModel, bool>(FilterModulePreferencesFunction)">
+                    <ToolBarContent>
+                        <MudTextField @bind-Value="ModulePreferenceSearchString"
+                                  Style="margin-top: -6px;"
+                                  Placeholder="Search"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"></MudTextField>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.User.FirstName)">First name</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.User.Surname)">Surname</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.User.AchievedLevel)">Achieved level</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+                        <AuthorizeView Context="authorizeViewContext" Resource="Model" Policy="@Policies.IsModuleCoordinator">
+                            <MudTh Style="width:80px;"></MudTh>
+                            <MudTh Style="width:80px;"></MudTh>
+                        </AuthorizeView>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="First name">
+                            <MudLink Href="@($"/Users/{context.User.Id}")">
+                                @context.User.FirstName
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Surname">
+                            <MudLink Href="@($"/Users/{context.User.Id}")">
+                                @context.User.Surname
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Achieved level">@context.User.AchievedLevel</MudTd>
+                        <MudTd DataLabel="Status">@context.Status</MudTd>
+                        <AuthorizeView Context="authorizeViewContext" Resource="Model" Policy="@Policies.IsModuleCoordinator">
+                            @if (context.Status == Status.PendingResponse.ToString())
+                            {
+                                <MudTd Class="pa-0">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Check"
+                                               Title="Approve"
+                                               Color="Color.Success"
+                                               OnClick="@(() => OpenAcceptModulePreferenceConfirmationDialog(context.User.Id))"></MudIconButton>
+                                </MudTd>
+                                <MudTd Class="pa-0">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                               Title="Reject"
+                                               Color="Color.Error"
+                                               OnClick="@(() => OpenDeclineModulePreferenceConfirmationDialog(context.User.Id))"></MudIconButton>
+                                </MudTd>
+                            }
+                            else
+                            {
+                                <MudTd></MudTd>
+                                <MudTd></MudTd>
+                            }
+                        </AuthorizeView>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+        </MudTabs>
+    </AuthorizeView>
+}
+else
+{
+    <MudText>Loading...</MudText>
+}

@@ -1,0 +1,68 @@
+﻿@page "/LabSchedules/Edit/{LabScheduleId:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+
+<PageTitle>@Title</PageTitle>
+
+@if (LabModel is not null && LabScheduleModel is not null)
+{
+    <AuthorizeView Resource="LabModel" Policy="@Policies.IsLabCoordinator">
+        <Authorized>
+            <MudCard>
+                <MudForm @ref="Form" Model="Command" Validation="ValidateValue" ValidationDelay="0">
+                    <MudCardHeader Class="pb-0">
+                        <MudText Typo="Typo.h6">@Title</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="LabModel.Name"
+                                          For="@(() => LabModel.Name)"
+                                          Immediate="true"
+                                          Label="Lab"
+                                          ReadOnly="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudDatePicker @bind-Date="Command.Date"
+                                           For="@(() => Command.Date)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="Date"
+                                           Placeholder="Select Date" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTimePicker @bind-Time="Command.Start"
+                                           For="@(() => Command.Start)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="Start Time" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTimePicker @bind-Time="Command.End"
+                                           For="@(() => Command.End)"
+                                           Editable="true"
+                                           Required="true"
+                                           Label="End Time" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" Class="ml-auto mr-2 mb-2" OnClick="@(async () => await UpdateLabSchedule())">Update</MudButton>
+                    </MudCardActions>
+                </MudForm>
+            </MudCard>
+        </Authorized>
+        <NotAuthorized>
+            @{
+                try
+                {
+                    NavigationManager.NavigateTo("/401");
+                }
+                catch { } // Safe to ignore exception
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <MudText>Loading...</MudText>
+}

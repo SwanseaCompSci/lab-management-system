@@ -1,0 +1,139 @@
+﻿@page "/Tools/Allocation"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.ModulePreferenceModels
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.UserModels
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+
+<PageTitle>@Title</PageTitle>
+
+<AuthorizeView Context="authorizeViewContext" Roles="@ApplicationRole.Administrator.ToString()">
+    <Authorized>
+        <MudText Typo="Typo.h6">@Title</MudText>
+
+        @if (Users.Any())
+        {
+            <MudTable Class="mt-4" Items="Users" Hover="true" Filter="new Func<UserModel, bool>(FilterUsersFunction)">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Users who did not fill in a questionnaire</MudText>
+                    <MudSpacer />
+                    <MudTextField Style="margin-top: -6px;" @bind-Value="UsersSearchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+                </ToolBarContent>
+
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.FirstName)">First Name</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.Surname)">Surname</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.AchievedLevel)">Achieved Level</MudTableSortLabel></MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="First Name">
+                        <MudLink Href="@($"/Users/{context.Id}")">
+                            @context.FirstName
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Surname">
+                        <MudLink Href="@($"/Users/{context.Id}")">
+                            @context.Surname
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Achieved Level">@context.AchievedLevel</MudTd>
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        }
+
+        @if (ModulePreferences.Any())
+        {
+            <MudTable Class="mt-4" Items="ModulePreferences" Hover="true" Filter="new Func<ModulePreferenceDetailModel, bool>(FilterModulePreferencesFunction)">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Module Preferences</MudText>
+                    <MudSpacer />
+                    <MudSwitch @bind-Checked="@ShowPendingResponseOnly" Label="Show pending responses only" Color="Color.Primary"></MudSwitch>
+                    <MudTextField Style="margin-top: -6px;" @bind-Value="ModulePreferencesSearchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.Module.Name)">Module Name</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.Module.Code)">Module Code</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.Module.Level)">Module Level</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.User.FirstName)">First Name</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.User.Surname)">Surname</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.User.AchievedLevel)">Achieved Level</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<ModulePreferenceDetailModel, object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+                    <MudTh Style="width:80px;"></MudTh>
+                    <MudTh Style="width:80px;"></MudTh>
+                </HeaderContent>
+            
+                <RowTemplate>
+                    <MudTd DataLabel="Module Name">
+                        <MudLink Href="@($"/Modules/{context.Module.Id}")">
+                            @context.Module.Name
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Module Code">@context.Module.Code</MudTd>
+                    <MudTd DataLabel="Module Level">@context.Module.Level</MudTd>
+
+                    <MudTd DataLabel="First Name">
+                        <MudLink Href="@($"/Users/{context.User.Id}")">
+                            @context.User.FirstName
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Surname">
+                        <MudLink Href="@($"/Users/{context.User.Id}")">
+                            @context.User.Surname
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Achieved Level">@context.User.AchievedLevel</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+
+                    @if (context.Status == Status.PendingResponse.ToString())
+                    {
+                        <MudTd Class="pa-0">
+                            <MudIconButton Icon="@Icons.Material.Filled.Check"
+                                           Title="Approve"
+                                           Color="Color.Success"
+                                           OnClick="@(() => AcceptModulePreferenceAsync(userId: context.User.Id, moduleId: context.Module.Id))"></MudIconButton>
+                        </MudTd>
+                        <MudTd Class="pa-0">
+                            <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                           Title="Reject"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeclineModulePreferenceAsync(userId: context.User.Id, moduleId: context.Module.Id))"></MudIconButton>
+                        </MudTd>
+                    }
+                    else
+                    {
+                        <MudTd></MudTd>
+                        <MudTd></MudTd>
+                    }
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        }
+
+        @if (Users.Any() == false && ModulePreferences.Any() == false)
+        {
+            <div class="mt-4">
+                <MudText Align="Align.Center" Style="font-style: italic;">No actions needed.</MudText>
+            </div>
+        }
+
+        <div class="d-flex flex-auto mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Info" Class="ml-auto mb-2" OnClick="@(async () => await RunAllocationsAsync())">Run Allocations</MudButton>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        @{
+            try
+            {
+                NavigationManager.NavigateTo("/401");
+            }
+            catch { } // Safe to ignore exception
+        }
+    </NotAuthorized>
+</AuthorizeView>

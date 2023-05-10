@@ -1,0 +1,172 @@
+﻿@page "/Users/{UserId:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.UserModels
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+
+<PageTitle>@Title</PageTitle>
+
+@if (UserModel is not null)
+{
+    <AuthorizeView Context="authorizeViewContextUser" Resource="UserModel" Policy="@Policies.IsCurrentUser">
+        <Authorized>
+            <MudCard Class="mb-4">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">@($"{UserModel.FirstName} {UserModel.Surname}")</MudText>
+                    <AuthorizeView Context="authorizeViewContextAdministrator" Roles="@ApplicationRole.Administrator.ToString()">
+                        <MudSpacer />
+                        <MudButton Href="@($"/Users/Edit/{UserModel.Id}")" Class="ml-4" Variant="Variant.Filled" Color="@Color.Info">Edit</MudButton>
+                        <MudButton OnClick="@(() => OpenDeleteUserConfirmationDialog(UserModel.Id))" Class="ml-4" Variant="Variant.Filled" Color="@Color.Error">Delete</MudButton>
+                    </AuthorizeView>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTextField @bind-Value="UserModel.FirstName" Label="First name" ReadOnly="true" Variant="Variant.Text" />
+                    <MudTextField @bind-Value="UserModel.Surname" Label="Surname" ReadOnly="true" Variant="Variant.Text" />
+                    <MudTextField @bind-Value="UserModel.AchievedLevel" Label="Achieved level" ReadOnly="true" Variant="Variant.Text" />
+                    <MudTextField @bind-Value="UserModel.MaxWeeklyWorkHours" Label="Maximum number of work hours per week" ReadOnly="true" Variant="Variant.Text" />
+                </MudCardContent>
+            </MudCard>
+
+            <MudTable Class="mb-4" Items="UserModel.ModuleRoles" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Modules</MudText>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModuleRoleModel, object>(x => x.Module.Name)">Name</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModuleRoleModel, object>(x => x.Module.Code)">Code</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModuleRoleModel, object>(x => x.Module.Level)">Level</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModuleRoleModel, object>(x => x.Role)">Role</MudTableSortLabel></MudTh>
+                    <AuthorizeView Context="authorizeViewContextRemoveUserButton" Roles="@ApplicationRole.Administrator.ToString()">
+                        <MudTh Style="width:80px;"></MudTh>
+                    </AuthorizeView>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">
+                        <MudLink Href="@($"/Modules/{context.Module.Id}")">
+                            @context.Module.Name
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Code">@context.Module.Code</MudTd>
+                    <MudTd DataLabel="Level">@context.Module.Level</MudTd>
+                    <MudTd DataLabel="Role">@context.Role</MudTd>
+                    <AuthorizeView Context="authorizeViewContextRemoveUserButton" Roles="@ApplicationRole.Administrator.ToString()">
+                        <MudTd Class="pa-0">
+                            <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                       Color="Color.Error"
+                                       OnClick="@(() => OpenRemoveUserModuleRoleConfirmationDialog(context.Module.Id))"></MudIconButton>
+                        </MudTd>
+                    </AuthorizeView>
+                </RowTemplate>
+            </MudTable>
+
+            <MudCard>
+                <AuthorizeView Context="authorizeViewContextIsCurrentUser" Resource="UserModel" Policy="@Policies.IsCurrentUser">
+                    @if (UserModel.QuestionnaireToken is not null)
+                    {
+                        <MudCardHeader>
+                            <MudSpacer />
+                            <MudButton Href="@($"/Questionnaire/{UserModel.QuestionnaireToken}")" Class="mr-2" Variant="Variant.Filled" Color="@Color.Success">Submit response</MudButton>
+                        </MudCardHeader>
+                    }
+                </AuthorizeView>
+                <AuthorizeView Context="authorizeViewContextTimeAvailabilityAdmin" Roles="@ApplicationRole.Administrator.ToString()">
+                    @if (UserModel.QuestionnaireToken is null)
+                    {
+                        <MudCardHeader>
+                            <MudSpacer />
+                            <MudButton OnClick="@(() => OpenQuestionnaireResetConfirmationDialog(UserModel.Id))" Variant="Variant.Filled" Color="@Color.Error">Delete Response</MudButton>
+                            <MudButton OnClick="@(() => OpenGenerateNewQuestionnaireTokenConfirmationDialog(UserModel.Id))" Class="ml-4 mr-2" Variant="Variant.Filled" Color="@Color.Error">Request new response</MudButton>
+                        </MudCardHeader>
+                    }
+                </AuthorizeView>
+
+                <MudCardContent Class="pa-0">
+                    <MudTabs Elevation="2">
+                        <MudTabPanel Text="Time Availability">
+                            <MudTable Items="Times">
+                                <HeaderContent>
+                                    <MudTh></MudTh>
+                                    @foreach (WorkDayOfWeek day in Enum.GetValues(typeof(WorkDayOfWeek)))
+                                    {
+                                        <MudTh><MudText Align="Align.Center">@day.ToString()</MudText></MudTh>
+                                    }
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd Style="width:160px">
+                                        <MudText Align="Align.Center">
+                                            @($"{context.Hour.ToString().PadLeft(2, '0')}:00 - {(context.Hour + 1).ToString().PadLeft(2, '0')}:00")
+                                        </MudText>
+                                    </MudTd>
+                                    @foreach (WorkDayOfWeek day in Enum.GetValues(typeof(WorkDayOfWeek)))
+                                    {
+                                        <MudTh>
+                                            @{
+                                                var timeAvailability = TimeAvailabilities.First(x =>
+                                                    x.Day == day &&
+                                                    x.StartTime.Hour == context.Hour);
+
+                                                if (timeAvailability.IsAvailable == false && timeAvailability.IsManuallyAllocated)
+                                                {
+                                                    <MudText Align="Align.Center">
+                                                        <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Color="@Color.Warning" Title="Not available, allocated manually" />
+                                                    </MudText>
+                                                }
+                                                else if (timeAvailability.IsAvailable && timeAvailability.IsAllocated)
+                                                {
+                                                    <MudText Align="Align.Center">
+                                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="@Color.Warning" Title="Allocated" />
+                                                    </MudText>
+                                                }
+                                                else if (timeAvailability.IsAvailable)
+                                                {
+                                                    <MudText Align="Align.Center">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Check" Color="@Color.Success" Title="Available" />
+                                                    </MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudText Align="Align.Center">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="@Color.Error" Title="Unavailable" />
+                                                    </MudText>
+                                                }
+                                            }
+                                        </MudTh>
+                                    }
+                                </RowTemplate>
+                            </MudTable>
+                        </MudTabPanel>
+                        <MudTabPanel Text="Module Preferences">
+                            <MudTable Items="UserModel.ModulePreferences" Hover="true">
+                                <HeaderContent>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModulePreferenceModel, object>(x => x.Module.Name)">Name</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModulePreferenceModel, object>(x => x.Module.Code)">Code</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModulePreferenceModel, object>(x => x.Module.Level)">Level</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<UserDetailModulePreferenceModel, object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Name">
+                                        <MudLink Href="@($"/Modules/{context.Module.Id}")">
+                                            @context.Module.Name
+                                        </MudLink>
+                                    </MudTd>
+                                    <MudTd DataLabel="Code">@context.Module.Code</MudTd>
+                                    <MudTd DataLabel="Level">@context.Module.Level</MudTd>
+                                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </MudTabPanel>
+                    </MudTabs>
+                </MudCardContent>
+            </MudCard>
+        </Authorized>
+        <NotAuthorized>
+            @{
+                try
+                {
+                    NavigationManager.NavigateTo("/401");
+                }
+                catch { } // Safe to ignore exception
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+}

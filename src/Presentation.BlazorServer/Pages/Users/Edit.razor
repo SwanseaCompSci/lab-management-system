@@ -1,0 +1,69 @@
+﻿@page "/Users/Edit/{UserId:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+
+<PageTitle>@Title</PageTitle>
+
+@if (Command is not null)
+{
+    <AuthorizeView Roles="@ApplicationRole.Administrator.ToString()">
+        <Authorized>
+            <MudCard>
+                <MudForm @ref="Form" Model="Command" Validation="@ValidateValue" ValidationDelay="0">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">@Title</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTextField @bind-Value="Command.FirstName"
+                                      For="@(() => Command.FirstName)"
+                                      Immediate="true"
+                                      ReadOnly="true"
+                                      Label="First name" />
+
+                        <MudTextField @bind-Value="Command.Surname"
+                                  For="@(() => Command.Surname)"
+                                  Immediate="true"
+                                  ReadOnly="true"
+                                  Label="Surname" />
+
+                        <MudSelect @bind-Value="Command.AchievedLevel"
+                               For="@(() => Command.AchievedLevel)"
+                               Immediate="true"
+                               Required="true"
+                               Label="Achieved level">
+                            @foreach (Level item in Enum.GetValues(typeof(Level)))
+                            {
+                                var value = item.ToString();
+                                <MudSelectItem Value="@value">@value</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudNumericField @bind-Value="Command.MaxWeeklyWorkHours"
+                                     For="@(() => Command.MaxWeeklyWorkHours)"
+                                     Immediate="true"
+                                     Required="true"
+                                     Label="Maximum number of work hours per week"
+                                     Min="0" />
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" Class="ml-auto mr-2 mb-2" OnClick="@(async () => await UpdateUser())">Update</MudButton>
+                    </MudCardActions>
+                </MudForm>
+            </MudCard>
+        </Authorized>
+        <NotAuthorized>
+            @{
+                try
+                {
+                    NavigationManager.NavigateTo("/401");
+                }
+                catch { } // Safe to ignore exception
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <MudText>Loading...</MudText>
+}

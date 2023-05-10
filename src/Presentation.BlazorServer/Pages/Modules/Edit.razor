@@ -1,0 +1,62 @@
+﻿@page "/Modules/Edit/{ModuleId:guid}"
+@using ModuleCommands = SwanseaCompSci.LabManagementSystem.Core.Application.Commands.ModuleCommands
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+
+<PageTitle>@Title</PageTitle>
+
+@if (Command is not null)
+{
+    <AuthorizeView Resource="Resource" Policy="@Policies.IsModuleCoordinator">
+        <Authorized>
+            <MudCard>
+                <MudForm @ref="Form" Model="Command" Validation="@ValidateValue" ValidationDelay="0">
+                    <MudCardHeader Class="pb-0">
+                        <MudText Typo="Typo.h6">@Title</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTextField @bind-Value="Command.Name"
+                                  For="@(() => Command.Name)"
+                                  Immediate="true"
+                                  Required="true"
+                                  Label="Name" />
+
+                        <MudTextField @bind-Value="Command.Code"
+                                  For="@(() => Command.Code)"
+                                  Immediate="true"
+                                  Required="true"
+                                  Label="Code" />
+
+                        <MudSelect @bind-Value="Command.Level"
+                               For="@(() => Command.Level)"
+                               Immediate="true"
+                               Required="true"
+                               Label="Level">
+                            @foreach (Level item in Enum.GetValues(typeof(Level)))
+                            {
+                                var value = item.ToString();
+                                <MudSelectItem Value="@value">@value</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" Class="ml-auto mr-2 mb-2" OnClick="@(async () => await UpdateModule())">Update</MudButton>
+                    </MudCardActions>
+                </MudForm>
+            </MudCard>
+        </Authorized>
+        <NotAuthorized>
+            @{
+                try
+                {
+                    NavigationManager.NavigateTo("/401");
+                }
+                catch { } // Safe to ignore exception
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <MudText>Loading...</MudText>
+}

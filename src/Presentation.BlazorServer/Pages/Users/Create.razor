@@ -1,0 +1,78 @@
+﻿@page "/Users/Create"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.UserModels;
+
+<PageTitle>@Title</PageTitle>
+
+<AuthorizeView Roles="@ApplicationRole.Administrator.ToString()">
+    <Authorized>
+        <MudCard>
+            <MudForm @ref="Form" Model="Model" Validation="ValidateValue" ValidationDelay="0">
+                <MudCardHeader Class="pb-0">
+                    <MudText Typo="Typo.h6">@Title</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (SelectedUser is null)
+                    {
+                        <MudAutocomplete @bind-Value="SelectedUser"
+                                     T="UserModel"
+                                     Label="Search for user"
+                                     MaxLength="120"
+                                     Required="true"
+                                     Clearable="true"
+                                     SearchFunc="@SearchUserAsync" Immediate="true" ResetValueOnEmptyText="true"
+                                     AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary"
+                                     For="@(() => SelectedUser)" />
+                    }
+                    else
+                    {
+                        <MudTextField @bind-Value="Model.FirstName"
+                                  For="@(() => Model.FirstName)"
+                                  Immediate="true"
+                                  Required="true"
+                                  Label="First name"
+                                  ReadOnly="true" />
+
+                        <MudTextField @bind-Value="Model.Surname"
+                                  For="@(() => Model.Surname)"
+                                  Immediate="true"
+                                  Required="true"
+                                  Label="Surname"
+                                  ReadOnly="true" />
+
+                        <MudSelect @bind-Value="Model.AchievedLevel"
+                               For="@(() => Model.AchievedLevel)"
+                               Immediate="true"
+                               Required="true"
+                               Label="Achieved level">
+                            @foreach (Level item in Enum.GetValues(typeof(Level)))
+                            {
+                                var value = item.ToString();
+                            <MudSelectItem Value="@value">@value</MudSelectItem>
+                            }
+                    </MudSelect>
+
+                        <MudNumericField @bind-Value="Model.MaxWeeklyWorkHours"
+                                     For="@(() => Model.MaxWeeklyWorkHours)"
+                                     Immediate="true"
+                                     Required="true"
+                                     Label="Maximum number of work hours per week" />
+                    }
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Class="ml-auto mr-2 mb-2" OnClick="@(async () => await CreateUser())">Create</MudButton>
+                </MudCardActions>
+            </MudForm>
+        </MudCard>
+    </Authorized>
+    <NotAuthorized>
+        @{
+            try
+            {
+                NavigationManager.NavigateTo("/401");
+            }
+            catch { } // Safe to ignore exception
+        }
+    </NotAuthorized>
+</AuthorizeView>

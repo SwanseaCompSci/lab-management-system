@@ -1,0 +1,65 @@
+﻿@page "/"
+
+<PageTitle>@Title</PageTitle>
+
+@if (User is not null && WorkShifts is not null)
+{
+    if (QuestionnaireAlertClosed == false && User.QuestionnaireToken is not null)
+    {
+        <MudAlert Class="mb-4" Severity="Severity.Info" Variant="Variant.Filled" ShowCloseIcon="true" CloseIconClicked="(() => QuestionnaireAlertClosed = true)">
+            Please fill in your time availability and module preferences in your profile
+        </MudAlert>
+    }
+
+    if (WorkShifts.Any())
+    {
+        <MudTable Items="WorkShifts" Hover="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6" GutterBottom="true">Upcoming work shifts</MudText>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Module</MudTh>
+                <MudTh>Lab</MudTh>
+                <MudTh>Date</MudTh>
+                <MudTh>Start</MudTh>
+                <MudTh>End</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Module">
+                    <MudLink Href="@($"/Modules/{context.ModuleId}")">
+                        @context.ModuleName
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Lab">
+                    <MudLink Href="@($"/Labs/{context.LabId}")">
+                        @context.LabName
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Date">
+                    @(DateOnly.FromDateTime(context.LabScheduleStart))
+                </MudTd>
+                <MudTd DataLabel="Start">
+                    @(TimeOnly.FromDateTime(context.LabScheduleStart))
+                </MudTd>
+                <MudTd DataLabel="End">
+                    @(TimeOnly.FromDateTime(context.LabScheduleEnd))
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    }
+    else
+    {
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h6" GutterBottom="true">Upcoming work shifts</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText>You have no upcoming work shifts.</MudText>
+            </MudCardContent>
+        </MudCard>
+    }
+}
+

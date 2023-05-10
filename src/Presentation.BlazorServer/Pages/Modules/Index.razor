@@ -1,0 +1,65 @@
+﻿@page "/Modules"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.ModuleModels
+
+<PageTitle>@Title</PageTitle>
+
+<MudTable Items="@Modules" Hover="true" Filter="new Func<ModuleModel,bool>(FilterFunction)">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+        <MudSpacer />
+        <MudTextField Style="margin-top: -6px;" @bind-Value="SearchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+
+        <AuthorizeView Roles="@($"{ApplicationRole.Administrator.ToString()}")">
+            <MudButton Href="@($"/Modules/Create")" Class="ml-4 mr-2" Variant="Variant.Filled" Color="@Color.Success">New Module</MudButton>
+        </AuthorizeView>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<ModuleModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ModuleModel, object>(x => x.Code)">Code</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ModuleModel, object>(x => x.Level)">Level</MudTableSortLabel></MudTh>
+
+        @* Edit *@
+        <MudTh Style="width:80px;"></MudTh>
+
+        @* Delete *@
+        <AuthorizeView Roles="@($"{ApplicationRole.Administrator.ToString()}")">
+            <MudTh Style="width:80px;"></MudTh>
+        </AuthorizeView>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">
+            <MudLink Href="@($"/Modules/{context.Id}")">
+                @context.Name
+            </MudLink>
+        </MudTd>
+        <MudTd DataLabel="Code">@context.Code</MudTd>
+        <MudTd DataLabel="Level">@context.Level</MudTd>
+
+        @* Only display if the user is Administrator or ModuleCoordinator *@
+        <AuthorizeView Context="authorizeViewContext" Resource="context" Policy="@Policies.IsModuleCoordinator">
+            <Authorized>
+                <MudTd Class="pa-0">
+                    <MudIconButton Href="@($"/Modules/Edit/{context.Id}")" Icon="@Icons.Material.Filled.Edit" Color="Color.Info"></MudIconButton>
+                </MudTd>
+            </Authorized>
+            <NotAuthorized>
+                <MudTd></MudTd>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        @* Only display if the user has Administrator role *@
+        <AuthorizeView Context="authorizeViewContext" Roles="@($"{ApplicationRole.Administrator.ToString()}")">
+            <MudTd Class="pa-0">
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="@(() => OpenDeleteConfirmationDialog(context.Id))"></MudIconButton>
+            </MudTd>
+        </AuthorizeView>
+
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>

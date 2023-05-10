@@ -1,0 +1,9 @@
+﻿@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+    <MudNavLink Href="/Modules" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Class">Modules</MudNavLink>
+    <AuthorizeView Roles="@ApplicationRole.Administrator.ToString()">
+        <MudNavLink Href="/Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Group">Users</MudNavLink>
+        <MudNavLink Href="/Tools" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Tools</MudNavLink>
+    </AuthorizeView>
+</MudNavMenu>

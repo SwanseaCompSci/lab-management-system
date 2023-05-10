@@ -1,0 +1,15 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudContainer Class="d-flex justify-center gap-4 mb-2">
+            <MudButton OnClick="Cancel" Variant="Variant.Filled">
+                @CancelButtonText
+            </MudButton>
+            <MudButton OnClick="Confirm" Color="Color.Error" Variant="Variant.Filled">
+                @ConfirmButtonText
+            </MudButton>
+        </MudContainer>
+    </DialogActions>
+</MudDialog>

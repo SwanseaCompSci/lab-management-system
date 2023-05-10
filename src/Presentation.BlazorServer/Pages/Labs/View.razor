@@ -1,0 +1,156 @@
+﻿@page "/Labs/{LabId:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Common.Enums
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.LabScheduleModels
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Models.UserModels
+
+<PageTitle>@Title</PageTitle>
+
+@if (Model is not null)
+{
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">@Model.Name</MudText>
+            <AuthorizeView Resource="@Model" Policy="@Policies.IsLabCoordinator">
+                <MudSpacer />
+                <MudButton Href="@($"/Labs/Edit/{Model.Id}")" Class="ml-4" Variant="Variant.Filled" Color="@Color.Info">Edit</MudButton>
+            </AuthorizeView>
+            <AuthorizeView Resource="@Model" Policy="@Policies.IsModuleCoordinator">
+                <MudButton OnClick="@(() => OpenDeleteLabConfirmationDialog(Model.Id))" Class="ml-4" Variant="Variant.Filled" Color="@Color.Error">Delete</MudButton>
+            </AuthorizeView>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="Model.Day" Label="Day of Week" ReadOnly="true" Variant="Variant.Text" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="Model.StartTime" Label="Start Time" ReadOnly="true" Variant="Variant.Text" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="Model.EndTime" Label="End Time" ReadOnly="true" Variant="Variant.Text" />
+                </MudItem>
+
+                <AuthorizeView Resource="Model" Policy="@Policies.IsLabCoordinator">
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="Model.MinNumberOfStaff" Label="Min Number Of Staff" ReadOnly="true" Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="Model.MaxNumberOfStaff" Label="Max Number Of Staff" ReadOnly="true" Variant="Variant.Text" />
+                    </MudItem>
+                </AuthorizeView>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudTable Class="mb-4" Items="Model.LabSchedules" Hover="true" Filter="new Func<LabScheduleModel, bool>(FilterLabSchedulesFunction)">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Schedules</MudText>
+            <MudSpacer />
+            <MudSwitch @bind-Checked="@IncludePastSchedules" Label="Show past schedules" Color="Color.Primary"></MudSwitch>
+            <AuthorizeView Resource="@Model" Policy="@Policies.IsLabCoordinator">
+                <MudButton Href="@($"/LabSchedules/Create/{Model.Id}")" Class="ml-4 mr-2" Variant="Variant.Filled" Color="@Color.Success">New Schedule</MudButton>
+            </AuthorizeView>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<LabScheduleModel, object>(x => x.Start)">Start</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<LabScheduleModel, object>(x => x.End)">End</MudTableSortLabel></MudTh>
+            <MudTh Style="width:80px;"></MudTh>
+            <MudTh Style="width:80px;"></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Start">@context.Start</MudTd>
+            <MudTd DataLabel="End">@context.End</MudTd>
+            <AuthorizeView Context="authorizeViewContext" Resource="Model" Policy="@Policies.IsLabCoordinator">
+                <MudTd Class="pa-0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Info"
+                               Href="@($"/LabSchedules/Edit/{context.Id}")"></MudIconButton>
+                </MudTd>
+                <MudTd Class="pa-0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="@(() => OpenDeleteLabScheduleConfirmationDialog(context.Id))"></MudIconButton>
+                </MudTd>
+            </AuthorizeView>
+        </RowTemplate>
+    </MudTable>
+
+    <AuthorizeView Context="authorizeViewContext" Resource="Model" Policy="@Policies.IsLabCoordinator">
+        <MudTable Class="mb-4"
+              Items="Model.Users"
+              Hover="true"
+              Filter="new Func<UserModel, bool>(FilterUsersFunction)">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Staff</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="UsersSearchString"
+                          Style="margin-top: -6px;"
+                          Placeholder="Search"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium"></MudTextField>
+                <AuthorizeView Roles="@ApplicationRole.Administrator.ToString()">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Class="ml-4 mr-2" OnClick="@(ShowAddStaffDialog)">Add User</MudButton>
+                </AuthorizeView>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.FirstName)">First name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.Surname)">Surname</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.AchievedLevel)">Achieved level</MudTableSortLabel></MudTh>
+                <AuthorizeView Context="authorizeViewContextAdminButton" Roles="@ApplicationRole.Administrator.ToString()">
+                    <MudTh Style="width:80px;"></MudTh>
+                </AuthorizeView>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="First name">
+                    <MudLink Href="@($"/Users/{context.Id}")">
+                        @context.FirstName
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Surname">
+                    <MudLink Href="@($"/Users/{context.Id}")">
+                        @context.Surname
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Achieved level">@context.AchievedLevel</MudTd>
+                <AuthorizeView Context="authorizeViewContextAdminButton" Roles="@ApplicationRole.Administrator.ToString()">
+                    <MudTd Class="pa-0">
+                        <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                   Color="Color.Error"
+                                   OnClick="@(() => OpenRemoveStaffMemberConfirmationDialog(context.Id))"></MudIconButton>
+                    </MudTd>
+                </AuthorizeView>
+            </RowTemplate>
+        </MudTable>
+
+        <MudDialog @bind-IsVisible="IsAddStaffDialogVisible" Options="AddStaffDialogOptions">
+            <TitleContent>
+                <MudText>Add Staff Member</MudText>
+            </TitleContent>
+            <DialogContent>
+                <MudForm @ref="AddStaffDialogForm">
+                    <MudAutocomplete @bind-Value="AddStaffDialogSelectedUser"
+                                     T="UserModel"
+                                     Label="User"
+                                     MaxLength="120"
+                                     Required="true"
+                                     RequiredError="User is required!"
+                                     Clearable="true"
+                                     SearchFunc="@SearchUserAsync" Immediate="true" ResetValueOnEmptyText="true"
+                                     AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" />
+                </MudForm>
+            </DialogContent>
+            <DialogActions>
+                <MudContainer Class="d-flex justify-center gap-4 mb-2">
+                    <MudButton OnClick="@(() => IsAddStaffDialogVisible = false)" Variant="Variant.Filled">Cancel</MudButton>
+                    <MudButton OnClick="AddStaffDialogConfirm" Color="Color.Error" Variant="Variant.Filled">Add</MudButton>
+                </MudContainer>
+            </DialogActions>
+        </MudDialog>
+    </AuthorizeView>
+}
+else
+{
+    <MudText>Loading...</MudText>
+}

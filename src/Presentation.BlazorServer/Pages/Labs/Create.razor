@@ -1,0 +1,95 @@
+﻿@page "/Labs/Create/{ModuleId:guid}"
+@using SwanseaCompSci.LabManagementSystem.Core.Application.Authorization
+@using SwanseaCompSci.LabManagementSystem.Core.Domain.Enums
+
+<PageTitle>@Title</PageTitle>
+
+@if (ResourceResponse is not null)
+{
+    <AuthorizeView Resource="ResourceResponse.Resource" Policy="@Policies.IsModuleCoordinator">
+        <Authorized>
+            <MudCard>
+                <MudForm @ref="Form" Model="Model" Validation="@ValidateValue" ValidationDelay="0">
+                    <MudCardHeader Class="pb-0">
+                        <MudText Typo="Typo.h6">@Title</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="Model.Name"
+                                          For="@(() => Model.Name)"
+                                          Immediate="true"
+                                          Required="true"
+                                          Label="Name" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="4">
+                                <MudSelect @bind-Value="Model.Day"
+                                           For="@(() => Model.Day)"
+                                           Immediate="true"
+                                           Required="true"
+                                           Label="Day of Week">
+                                    @foreach (WorkDayOfWeek item in Enum.GetValues(typeof(WorkDayOfWeek)))
+                                    {
+                                        var value = item.ToString();
+                                        <MudSelectItem Value="@value">@value</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="4">
+                                <MudTimePicker @bind-Time="Model.StartTime"
+                                               For="@(() => Model.StartTime)"
+                                               Editable="true"
+                                               Required="true"
+                                               Label="Start Time" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="4">
+                                <MudTimePicker @bind-Time="Model.EndTime"
+                                               For="@(() => Model.EndTime)"
+                                               Editable="true"
+                                               Required="true"
+                                               Label="End Time" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="Model.MinNumberOfStaff"
+                                                 For="@(() => Model.MinNumberOfStaff)"
+                                                 Immediate="true"
+                                                 Min="1"
+                                                 Required="true"
+                                                 Label="Minimum Number Of Staff" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="Model.MaxNumberOfStaff"
+                                                 For="@(() => Model.MaxNumberOfStaff)"
+                                                 Immediate="true"
+                                                 Min="1"
+                                                 Required="true"
+                                                 Label="Maximum Number Of Staff" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Class="ml-auto mr-2 mb-2" OnClick="@(async () => await CreateLab())">Create</MudButton>
+                    </MudCardActions>
+                </MudForm>
+            </MudCard>
+        </Authorized>
+        <NotAuthorized>
+            @{
+                try
+                {
+                    NavigationManager.NavigateTo("/401");
+                }
+                catch { } // Safe to ignore exception
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <MudText>Loading...</MudText>
+}
