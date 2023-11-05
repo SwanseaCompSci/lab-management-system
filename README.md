@@ -1,6 +1,11 @@
 # Lab Management System
 
+This project is a Blazor web application for managing teaching assistants at Swansea University. The application allows for the allocation of teaching assistants to modules and labs based on their module preferences, time availability, as well as requirements of the modules.
+
+The implementation follows several design patterns and best practices, discussed in a [dissertation](./docs/dissertation.pdf) available in the `/docs` folder.
+
 ## Prerequisite
+
 - [Microsoft Azure](https://azure.microsoft.com/en-gb/)
 - [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet)
 - [SQL Server](https://www.microsoft.com/en-GB/sql-server/sql-server-downloads)
@@ -39,6 +44,7 @@
 ### Running the application
 
 1. Update the following section in your _appsettings.Development.json_ (Presentation.BlazorServer)
+
    ```json
    {
       "AzureAd": {
@@ -51,6 +57,7 @@
       }
    }
    ```
+
 1. Add secrets
    - `cd .\src\Presentation.BlazorServer\`
    - `dotnet user-secrets set "ConnectionStrings:DbConnection" "Data Source=localhost,1433;Initial Catalog=LabManagementSystemDb;User ID=SA;Password=Password_123;TrustServerCertificate=True;"`
